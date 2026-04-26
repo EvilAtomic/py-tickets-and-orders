@@ -1,9 +1,15 @@
 from django.contrib.auth.models import User
 from django.db import transaction
 import datetime
+from django.db.models import QuerySet
+from db.models import Ticket
+from db.models import Order
 
-from db.models import Order, Ticket
 
+def get_orders(username: str = None) -> QuerySet[Order]:
+    if username:
+        return Order.objects.filter(user__username=username)
+    return Order.objects.all()
 
 def create_order(tickets: list[dict], username: str| None, data: datetime) -> None:
     with transaction.atomic():
