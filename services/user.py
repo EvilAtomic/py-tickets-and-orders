@@ -1,4 +1,6 @@
-from db.models import User
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 
 def create_user(username, password, email=None, first_name=None, last_name=None):
@@ -15,8 +17,9 @@ def get_user(user_id):
     return User.objects.get(id=user_id)
 
 
+@transaction.atomic
 def update_user(user_id, username=None, password=None, email=None, first_name=None, last_name=None):
-    user = User.objects.get(id=user_id)
+    user = get_user(user_id)
 
     if username:
         user.username = username

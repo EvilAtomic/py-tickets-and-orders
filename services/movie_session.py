@@ -1,4 +1,8 @@
+from django.db import transaction
+from django.contrib.auth import get_user_model
 from db.models import MovieSession, Ticket
+
+User = get_user_model()
 
 
 def create_movie_session(movie_show_time, movie_id, cinema_hall_id):
@@ -11,10 +15,8 @@ def create_movie_session(movie_show_time, movie_id, cinema_hall_id):
 
 def get_movies_sessions(session_date=None):
     qs = MovieSession.objects.all()
-
     if session_date:
         qs = qs.filter(show_time__date=session_date)
-
     return qs
 
 
@@ -22,6 +24,7 @@ def get_movie_session_by_id(movie_session_id):
     return MovieSession.objects.get(id=movie_session_id)
 
 
+@transaction.atomic
 def update_movie_session(session_id, show_time=None, movie_id=None, cinema_hall_id=None):
     session = MovieSession.objects.get(id=session_id)
 

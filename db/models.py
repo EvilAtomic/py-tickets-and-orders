@@ -32,9 +32,6 @@ class Movie(models.Model):
     def __str__(self) -> str:
         return self.title
 
-    class Meta:
-        indexes = [models.Index(fields=["title"])]
-
 
 class CinemaHall(models.Model):
     name = models.CharField(max_length=255)
@@ -47,8 +44,16 @@ class CinemaHall(models.Model):
 
 class MovieSession(models.Model):
     show_time = models.DateTimeField()
-    cinema_hall = models.ForeignKey(CinemaHall, on_delete=models.CASCADE)
-    movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
+    cinema_hall = models.ForeignKey(
+        CinemaHall,
+        on_delete=models.CASCADE,
+        related_name="movie_sessions"
+    )
+    movie = models.ForeignKey(
+        Movie,
+        on_delete=models.CASCADE,
+        related_name="movie_sessions"
+    )
 
     def __str__(self) -> str:
         return f"{self.movie.title} {self.show_time}"
@@ -56,31 +61,37 @@ class MovieSession(models.Model):
 
 class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL,
-                             on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="orders"
+    )
 
     def __str__(self) -> str:
-        return str(self.created_at)
+        return f"<Order: {self.created_at}>"
 
     class Meta:
         ordering = ["-created_at"]
 
 
 class Ticket(models.Model):
-    movie_session = models.ForeignKey(MovieSession, on_delete=models.CASCADE)
-    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+    movie_session = models.ForeignKey(
+        MovieSession,
+        on_delete=models.CASCADE,
+        related_name="tickets"
+    )
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.CASCADE,
+        related_name="tickets"
+    )
     row = models.IntegerField()
     seat = models.IntegerField()
 
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=["row", "seat", "movie_session"],
-                                    name="unique_ticket")
-        ]
-
     def __str__(self) -> str:
-        return (f"{self.movie_session.movie.title} {self.movie_session.show_time} "
-                f"(row: {self.row}, seat: {self.seat})")
+        return (f"<Ticket: {self.movie_session.movie.title}"
+                f" {self.movie_session.show_time}"
+                f" (row: {self.row}, seat: {self.seat})>")
 
     def clean(self) -> None:
         hall = self.movie_session.cinema_hall
