@@ -1,12 +1,21 @@
+from __future__ import annotations
+
+from typing import Optional
 from django.db import transaction
 from django.contrib.auth import get_user_model
+from django.db.models import QuerySet
+
 from db.models import Order, Ticket
 
 User = get_user_model()
 
 
 @transaction.atomic
-def create_order(tickets, username, date=None):
+def create_order(
+    tickets: list[dict],
+    username: str,
+    date: Optional[str] = None,
+) -> Order:
     user = User.objects.get(username=username)
 
     order = Order.objects.create(user=user)
@@ -15,18 +24,18 @@ def create_order(tickets, username, date=None):
         Order.objects.filter(id=order.id).update(created_at=date)
         order.refresh_from_db()
 
-    for t in tickets:
+    for ticket in tickets:
         Ticket.objects.create(
             order=order,
-            row=t["row"],
-            seat=t["seat"],
-            movie_session_id=t["movie_session"]
+            row=ticket["row"],
+            seat=ticket["seat"],
+            movie_session_id=ticket["movie_session"],
         )
 
     return order
 
 
-def get_orders(username=None):
+def get_orders(username: Optional[str] = None) -> QuerySet[Order]:
     if username:
         return Order.objects.filter(user__username=username)
     return Order.objects.all()
