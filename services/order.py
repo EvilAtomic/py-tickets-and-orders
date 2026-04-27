@@ -48,9 +48,3 @@ def get_orders(username: Optional[str] = None):
         queryset = queryset.filter(user__username=username)
 
     return queryset
-
-
-def get_orders(username=None):
-    if username:
-        return Order.objects.filter(user__username=username)
-    return Order.objects.all()

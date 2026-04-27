@@ -1,7 +1,7 @@
-from typing import Optional, List
-from django.db.models import QuerySet
+from typing import List, Optional
 
 from django.db import transaction
+from django.db.models import QuerySet
 
 from db.models import Movie
 
@@ -16,13 +16,13 @@ def get_movies(
     if title:
         queryset = queryset.filter(title__icontains=title)
 
-    if genres_ids:
+    if genres_ids is not None:
         queryset = queryset.filter(genres__id__in=genres_ids)
 
-    if actors_ids:
+    if actors_ids is not None:
         queryset = queryset.filter(actors__id__in=actors_ids)
 
-    return queryset.distinct()
+    return queryset
 
 
 @transaction.atomic
