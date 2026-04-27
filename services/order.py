@@ -1,9 +1,7 @@
-from __future__ import annotations
+from typing import List, Dict, Optional
 
-from typing import Optional
-from django.db import transaction
 from django.contrib.auth import get_user_model
-from django.db.models import QuerySet
+from django.db import transaction
 
 from db.models import Order, Ticket
 
@@ -12,7 +10,7 @@ User = get_user_model()
 
 @transaction.atomic
 def create_order(
-    tickets: list[dict],
+    tickets: List[Dict],
     username: str,
     date: Optional[str] = None,
 ) -> Order:
@@ -21,21 +19,38 @@ def create_order(
     order = Order.objects.create(user=user)
 
     if date:
-        Order.objects.filter(id=order.id).update(created_at=date)
-        order.refresh_from_db()
+        order.created_at = date
+        order.save()
+
+    ticket_objects = []
 
     for ticket in tickets:
-        Ticket.objects.create(
-            order=order,
-            row=ticket["row"],
-            seat=ticket["seat"],
-            movie_session_id=ticket["movie_session"],
+        ticket_objects.append(
+            Ticket(
+                movie_session_id=ticket["movie_session"],
+                order=order,
+                row=ticket["row"],
+                seat=ticket["seat"],
+            )
         )
+
+    # ВАЖНО: именно create → чтобы вызывался clean()
+    for ticket in ticket_objects:
+        ticket.save()
 
     return order
 
 
-def get_orders(username: Optional[str] = None) -> QuerySet[Order]:
+def get_orders(username: Optional[str] = None):
+    queryset = Order.objects.all()
+
+    if username:
+        queryset = queryset.filter(user__username=username)
+
+    return queryset
+
+
+def get_orders(username=None):
     if username:
         return Order.objects.filter(user__username=username)
     return Order.objects.all()

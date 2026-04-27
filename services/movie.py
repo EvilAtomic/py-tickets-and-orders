@@ -1,18 +1,20 @@
-from __future__ import annotations
-
-from typing import Optional
-from django.db import transaction
+from typing import Optional, List
 from django.db.models import QuerySet
+
+from django.db import transaction
 
 from db.models import Movie
 
 
 def get_movies(
-    genres_ids: Optional[list[int]] = None,
-    actors_ids: Optional[list[int]] = None,
+    genres_ids: Optional[List[int]] = None,
+    actors_ids: Optional[List[int]] = None,
     title: Optional[str] = None,
 ) -> QuerySet:
     queryset = Movie.objects.all()
+
+    if title:
+        queryset = queryset.filter(title__icontains=title)
 
     if genres_ids:
         queryset = queryset.filter(genres__id__in=genres_ids)
@@ -20,32 +22,22 @@ def get_movies(
     if actors_ids:
         queryset = queryset.filter(actors__id__in=actors_ids)
 
-    if title:
-        queryset = queryset.filter(title__icontains=title)
-
-    return queryset
-
-
-def get_movie_by_id(movie_id: int) -> Movie:
-    return Movie.objects.get(id=movie_id)
+    return queryset.distinct()
 
 
 @transaction.atomic
 def create_movie(
     movie_title: str,
     movie_description: str,
-    genres_ids: Optional[list[int]] = None,
-    actors_ids: Optional[list[int]] = None,
+    genres_ids: List[int],
+    actors_ids: List[int],
 ) -> Movie:
     movie = Movie.objects.create(
         title=movie_title,
         description=movie_description,
     )
 
-    if genres_ids:
-        movie.genres.set(genres_ids)
-
-    if actors_ids:
-        movie.actors.set(actors_ids)
+    movie.genres.set(genres_ids)
+    movie.actors.set(actors_ids)
 
     return movie
