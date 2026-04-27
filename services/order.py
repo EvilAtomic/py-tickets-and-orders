@@ -34,7 +34,6 @@ def create_order(
             )
         )
 
-    # ВАЖНО: именно create → чтобы вызывался clean()
     for ticket in ticket_objects:
         ticket.save()
 
